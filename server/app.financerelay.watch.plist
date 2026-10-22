@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LaunchAgent для постоянного сторожа. Устанавливается в ~/Library/LaunchAgents/.
+  Подставь свои пути (python и папку server) перед установкой — см. README.
+
+  Установка:
+    cp app.financerelay.watch.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/app.financerelay.watch.plist
+  Остановка:
+    launchctl unload ~/Library/LaunchAgents/app.financerelay.watch.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>app.financerelay.watch</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Library/Frameworks/Python.framework/Versions/3.14/bin/python3.14</string>
+        <string>/Users/you/finance-relay/server/mac_watch.py</string>
+        <string>--loop</string>
+        <string>30</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/you/finance-relay/server</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/you/finance-relay/server/data/watch.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/you/finance-relay/server/data/watch.err.log</string>
+</dict>
+</plist>
