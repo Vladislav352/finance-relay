@@ -1,17 +1,26 @@
 # Finance Relay: финансовый поток для ИИ-агента без доступа к банкам
 
+![Finance Relay](docs/banner.svg)
+
+![Python](https://img.shields.io/badge/Python-stdlib-4d8dff?style=flat-square&labelColor=1b2330) ![доступ к банкам](https://img.shields.io/badge/доступ_к_банкам-нет-8a63f7?style=flat-square&labelColor=1b2330) ![OTP и коды](https://img.shields.io/badge/OTP_и_коды-вырезаются-4d8dff?style=flat-square&labelColor=1b2330) ![статус](https://img.shields.io/badge/статус-дома-8a63f7?style=flat-square&labelColor=1b2330)
+
+**[Страница проекта](https://vladislav352.github.io/finance-relay/)**
+
 > Агент видит ваши траты, доходы, остатки и долги, не имея ни одного банковского логина. Сторож на Mac читает СМС и уведомления банков, которые iPhone пересылает на Mac, вырезает коды и OTP, нормализует события в JSONL, а агент просто читает файл. Только чтение, всё локально.
 >
 > *Give your AI agent a read-only feed of your personal finances with zero bank credentials: a macOS watcher parses bank SMS/notifications forwarded from iPhone (Messages.app and Notification Center databases), strips OTPs, writes normalized JSONL events. Python stdlib, launchd.*
 
 ## Как это работает
 
-```
-iPhone (СМС от банков, пуши приложений)
-   → приходят на Mac (Пересылка сообщений / Центр уведомлений)
-   → mac_watch.py читает базы macOS, оставляет только финансовое, режет коды/OTP
-   → data/finance_events.jsonl
-   → агент (у меня — Hermes и OpenClaw) читает файл
+```mermaid
+flowchart LR
+  P[iPhone: СМС банков, пуши] -->|Пересылка сообщений| M[macOS Messages chat.db]
+  P --> N[Центр уведомлений db]
+  M --> W[mac_watch.py<br/>фильтр отправителей, дедуп]
+  N --> W
+  W --> X[parser.py<br/>сумма, карта, остаток, тип события, отсев OTP]
+  X --> J[(finance_events.jsonl)]
+  J --> A[ИИ-агент читает файл]
 ```
 
 Перехватить push чужих приложений на самом iPhone нельзя (ограничение iOS), поэтому точка перехвата — Mac, где и так живёт агент. Телефонное приложение и интернет-канал не нужны.

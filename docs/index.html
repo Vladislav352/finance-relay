@@ -1,0 +1,36 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finance Relay · Vladislav352</title><meta name="description" content="Сторож на Mac читает СМС и уведомления банков, которые пересылает iPhone, режет коды и отдаёт события в JSONL.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%234d8dff'/%3E%3Cstop offset='1' stop-color='%238a63f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://vladislav352.github.io/assets/site.css"><script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+const dark=true;
+mermaid.initialize({startOnLoad:true,theme:'base',securityLevel:'loose',themeVariables:{
+ fontFamily:'"Golos Text",sans-serif',fontSize:'14px',
+ primaryColor:dark?'#1b2330':'#ffffff',primaryTextColor:dark?'#e8ecf2':'#131922',primaryBorderColor:'#4d8dff',
+ lineColor:dark?'#8a63f7':'#6b4fe0',secondaryColor:dark?'#141a22':'#e9edf3',tertiaryColor:dark?'#0e1116':'#f3f5f8',
+ clusterBkg:dark?'#141a22':'#f3f5f8',clusterBorder:dark?'#303b4b':'#c9d2de',edgeLabelBackground:dark?'#141a22':'#ffffff',
+ noteBkgColor:dark?'#1b2330':'#e9edf3',noteTextColor:dark?'#e8ecf2':'#131922'}});
+</script></head><body><nav class="nav"><div class="wrap"><a class="brand" href="https://vladislav352.github.io/"><i></i>Vladislav352</a>
+<div class="nav-links"><a href="https://vladislav352.github.io/#projects">Проекты</a><a href="https://vladislav352.github.io/#about">Обо мне</a><a href="https://github.com/Vladislav352">GitHub</a></div></div></nav>
+<header class="wrap hero"><div><h1>Агент видит финансы <em>без доступа к банкам</em></h1><p>Сторож на Mac читает СМС и уведомления банков, которые пересылает iPhone, режет коды и отдаёт события в JSONL.</p><div class="cta"><a class="btn primary" href="https://github.com/Vladislav352/finance-relay">Код на GitHub</a></div></div><div class="frame" style="padding:28px;min-height:260px;display:flex;align-items:flex-end;background:radial-gradient(120% 120% at 0% 0%,var(--bg-3),var(--bg-2))"><pre class="mono" style="margin:0;color:var(--mut);font-size:13px;white-space:pre-wrap">server/
+  mac_watch.py   читает chat.db и базу уведомлений,
+                 фильтр отправителей, дедуп, JSONL
+  parser.py      суммы, валюта, ****карта, остаток,
+                 срок, банк, отсев рекламы и OTP
+  main.py        FastAPI-приёмник (необязательно)
+data/finance_events.jsonl</pre></div></header>
+<div class="hr"></div>
+<section id="inside"><div class="wrap"><h2>Что внутри</h2><p class="lead">Ни одного банковского логина. Точка перехвата там, где и так живёт агент.</p><div class="bento"><div class="tile c3 grad"><div class="num">0</div><h3>паролей и логинов</h3><p>Только чтение системных баз macOS, наружу ничего не уходит.</p></div><div class="tile c3 steel"><h3>Двойной фильтр секретов</h3><p>Сообщения с кодом, OTP и паролем отбрасываются в парсере и ещё раз в стороже.</p></div><div class="tile c2"><h3>Девять типов событий</h3><p>Расход, доход, перевод, остаток, долг, налог, штраф, возврат, неизвестно.</p></div><div class="tile c2"><h3>Карта только как ****1234</h3><p>Последние четыре цифры, сумма, валюта, остаток после операции, срок.</p></div><div class="tile c2"><h3>Один ручной шаг</h3><p>Выдать Python полный доступ к диску в настройках macOS.</p></div></div></div></section>
+<div class="hr"></div>
+<section id="how"><div class="wrap"><h2>Как устроено</h2><p class="lead">Перехватить push чужих приложений на iPhone нельзя, поэтому сторож стоит на Mac, куда телефон пересылает сообщения.</p><div class="diagram"><pre class="mermaid">flowchart LR
+  P[iPhone: СМС банков, пуши] --&gt;|Пересылка сообщений| M[macOS Messages chat.db]
+  P --&gt; N[Центр уведомлений db]
+  M --&gt; W[mac_watch.py&lt;br/&gt;фильтр отправителей, дедуп]
+  N --&gt; W
+  W --&gt; X[parser.py&lt;br/&gt;сумма, карта, остаток, тип события, отсев OTP]
+  X --&gt; J[(finance_events.jsonl)]
+  J --&gt; A[ИИ-агент читает файл]</pre></div><div class="tags" style="margin-top:22px"><span class="tag">Python stdlib</span><span class="tag">macOS Messages</span><span class="tag">Notification Center</span><span class="tag">launchd</span><span class="tag">FastAPI (опц.)</span></div></div></section>
+
+<div class="hr"></div>
+<section id="hard"><div class="wrap"><h2>Что было сложного</h2><div class="hard"><div><b>iOS не отдаёт пуши чужих приложений</b><p>Перехват перенесён на Mac: Пересылка сообщений и Центр уведомлений хранят всё в SQLite.</p></div><div><b>Среди СМС есть коды входа</b><p>Два независимых рубежа: регулярки парсера и повторная проверка в стороже, такие сообщения не сохраняются даже в сыром виде.</p></div></div></div></section>
+<footer><div class="wrap"><div>Владислав Арсентьев, AI-интегратор · <a href="https://t.me/Skit888">@Skit888</a></div><div><a href="https://vladislav352.github.io/wb-monitor/">WB-монитор</a> · <a href="https://vladislav352.github.io/finpulse/">Фин.пульс</a> · <a href="https://vladislav352.github.io/regbot/">РегБот</a> · <a href="https://vladislav352.github.io/command-center/">Командный центр</a></div></div></footer></body></html>
